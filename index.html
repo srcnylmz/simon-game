@@ -122,6 +122,7 @@
 			padding: 5px;
 			border: 1px solid black;
 			cursor: pointer;
+			background: rgba(255, 0, 0, 0.1);
 		}
 
 		.modeStrict {
@@ -151,6 +152,11 @@
 			border-radius: 5px;
 			padding: 15px;
 		}
+
+		.flash {
+			background-color: #fff;
+			transition-duration: 0.5s; 
+		}
 	</style>
 </head>
 <body>
@@ -177,15 +183,24 @@
 <script type="text/javascript">
 
 	// declaring variables
-	let challengeNumber = 0;
+	let game = "off";
+	let stepNumber = 0;
 	let challengePattern = [];
-	let controlPattern = [];
-	let colors = { blue: 0, red: 1, green: 2, yellow: 3 };
-	let mode = 0;
-	let modeNormalButton = document.getElementsByClassName("modeNormal");
-	let modeStrictButton = document.getElementsByClassName("modeStrict");
-	let challengeDigit = document.getElementsByClassName("turnNumber");
+	let colors = { red: 0, green: 1, yellow: 2, blue: 3 };
+	let mode = 0; // 0 for normal mode, 1 for strict mode
+	let clickCount = 0;
+	let modeNormalButton = document.getElementsByClassName("modeNormal")[0];
+	let modeStrictButton = document.getElementsByClassName("modeStrict")[0];
+	let startGameButton = document.getElementsByClassName("startButton")[0];
+	let challengeDigit = document.getElementsByClassName("turnNumber")[0];
+	let msgText = document.getElementsByClassName("logo")[0];
 	let usersTurn = false;
+
+	// colorful tabs
+	let redTab = document.getElementsByClassName("red")[0];
+	let greenTab = document.getElementsByClassName("green")[0];
+	let yellowTab = document.getElementsByClassName("yellow")[0];
+	let blueTab = document.getElementsByClassName("blue")[0];
 
 	// sound files
 	let blueAudioFile = new Audio('https://s3.amazonaws.com/freecodecamp/simonSound1.mp3');
@@ -194,17 +209,15 @@
     let yellowAudioFile = new Audio('https://s3.amazonaws.com/freecodecamp/simonSound4.mp3');
 
 	// change game mode
-	modeNormalButton[0].addEventListener("click", function() {
+	modeNormalButton.addEventListener("click", function() {
 		changeMode(0);
-		modeStrictButton[0].style.background = "white";
+		modeStrictButton.style.background = "white";
 		this.style.background = "rgba(255, 0, 0, 0.1)";
-		newChallenge();
 	});
 
-	modeStrictButton[0].addEventListener("click", function() {
-		restartGame();
+	modeStrictButton.addEventListener("click", function() {
 		changeMode(1);
-		modeNormalButton[0].style.background = "white";
+		modeNormalButton.style.background = "white";
 		this.style.background = "rgba(255, 0, 0, 0.1)";
 	});
 
@@ -215,75 +228,140 @@
 		}	
 	}
 
+	// restart game
 	function restartGame() {
-		challengeNumber = 1;
-		challengeDigit[0].innerHTML = "00";
+		stepNumber = 0;
+		challengeDigit.innerHTML = "00";
 		challengePattern = [];
+		newChallenge();
 	}
 
+	// start game
+	startGameButton.addEventListener("click", function() {
+		if (game == "off") {
+			this.style.background = "rgba(255, 0, 0, 0.1)";
+			this.innerHTML = "Restart";
+			this.style.left = "90px";
+			msgText.innerHTML = "Go on!";
+			newChallenge();
+			console.log("game started");
+		} else {
+			restartGame();
+			console.log("game restarted");
+		}
+	});
+
+	// hover effect for tabs
+	function hover(element) {
+		switch (element) {
+			case 0:
+				redTab.className += " flash";
+				setTimeout(function() {redTab.className = "red"}, 500);
+				break;
+			case 1:
+				greenTab.className += " flash";
+				setTimeout(function() {greenTab.className = "green"}, 500);
+				break;
+			case 2:
+				yellowTab.className += " flash";
+				setTimeout(function() {yellowTab.className = "yellow"}, 500);
+				break;
+			case 3:
+				blueTab.className += " flash";
+				setTimeout(function() {blueTab.className = "blue"}, 500);
+				break;
+		}
+	}
+
+	// play sound on click
+	function clickSound(color) {
+		switch (color) {
+			case 0:
+				blueAudioFile.load();
+				blueAudioFile.play();
+				break;
+			case 1:
+				redAudioFile.load();
+				redAudioFile.play();
+				break;
+			case 2:
+				greenAudioFile.load();
+				greenAudioFile.play();
+				break;
+			case 3:
+				yellowAudioFile.load();
+				yellowAudioFile.play();
+				break;
+		}
+	}
+
+	// start new game
 	function newChallenge() {
-		let randomNumber = Math.floor(Math.random()*4);
-		challengePattern.push(randomNumber);
-		challengeNumber++;
-		console.log(challengeDigit[0].innerHTML, challengePattern);
-		challengeDigit[0].innerHTML = challengeNumber < 10 ? `0${challengeNumber}` : challengeNumber;
-		playAudio();
+		generatePlayPattern();
+		nextRound();
+		game = "on";
+		usersTurn = true;
 	}
 
-	function playAudio() {
+	// generate play pattern
+	function generatePlayPattern() {
+		for (let i = 0; i < 20; i++) {
+			let randomNumber = Math.floor(Math.random()*4);
+			challengePattern.push(randomNumber);
+		}
 
-		for (let i = 0; i < challengePattern.length; i++) {
+	console.log(challengePattern);
+	}
+
+	// go to next round
+	function nextRound() {
+		stepNumber++;
+		challengeDigit.innerHTML = stepNumber < 10 ? `0${stepNumber}` : stepNumber;
+		playAudio(stepNumber);
+	}
+
+	// play sound for AI
+	function playAudio(step) {
+		for (let i = 0; i <= step; i++) {
 			let element = challengePattern[i];
 			
 			// IIFE (Immediately Invoking Functional Expression) used to setTimeout
 			(function (i) {
 				setTimeout(function () {
-					switch (element) {
-					case 0:
-						blueAudioFile.load();
-						blueAudioFile.play();
-						console.log("blue");
-						break;
-					case 1:
-						redAudioFile.load();
-						redAudioFile.play();
-						console.log("red");
-						break;
-					case 2:
-						greenAudioFile.load();
-						greenAudioFile.play();
-						console.log("green");
-						break;
-					case 3:
-						yellowAudioFile.load();
-						yellowAudioFile.play();
-						console.log("yellow");
-						break;
-					default:
-						console.log("default");
-						break;
-					}
+					clickSound(element);
+					hover(element);
 				}, 1000 * i);
 			})(i);	
 		}
 	}
 
+	// when user clicks a pad
 	function listenAudio(color) {
-		let clickedColor = color.getAttribute("class");
-		let clickedColorCode = colors[clickedColor];
-		
-		// save player pressed keys into a temporary array called controlPattern
-		if (controlPattern.length < challengePattern.length) {
-			controlPattern.push(clickedColorCode);
-
-			// burası olmadı. yapılacak şey iki arrayi her tuş basımında adım adım kontrol etmek. eğer game mode strict ise ona göre hata verip başa dönmek değil ise challengePatterni playAudio ile baştan dinletmek olacak
-			
-			// if player pushed enough number of keys than compare two arrays
-			if (controlPattern.length == challengePattern.length) {
-				if (controlPattern.toString() === challengePattern.toString()) {
-					console.log(controlPattern);
+		if (game == "on" && usersTurn == true) {
+			let clickedColor = color.getAttribute("class");
+			let clickedColorCode = colors[color.getAttribute("class")];
+			hover(clickedColorCode);
+			clickSound(clickedColorCode);
+	
+			if (challengePattern[clickCount] == clickedColorCode) {
+				console.log("aynı");
+				if (clickCount == stepNumber) {
+					console.log(clickCount, stepNumber);
+					clickCount = 0;
+					setTimeout(nextRound, 1000);
+				} else {
+					clickCount++;
 				}
-			}
+			} else {
+				if (mode == 0) {
+					console.log("error 0");
+					usersTurn = false;
+				} else {
+					console.log("error 1");
+					usersTurn = false;
+				}
+				clickCount++;
+			}	
 		}
 	}
 	
